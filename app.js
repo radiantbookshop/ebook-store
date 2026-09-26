@@ -43,7 +43,12 @@
   var coversReady = null;
   function ensureCovers() {
     if (!coversReady) {
-      coversReady = getJSON("data/covers.json").then(function (d) {
+      // cache-bust: covers.json grows as the fetcher runs; never serve stale
+      var bust = "data/covers.json?v=" + Math.floor(Date.now() / 3600000);
+      coversReady = fetch(bust, { cache: "no-cache" }).then(function (r) {
+        if (!r.ok) throw new Error("http " + r.status);
+        return r.json();
+      }).then(function (d) {
         coverMap = d || {};
         return coverMap;
       }).catch(function () { return coverMap; });
