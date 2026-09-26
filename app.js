@@ -197,6 +197,7 @@
         return '<li><span class="fn">' + esc(f.n) + src + '</span>' +
           '<span class="fs">' + esc(fmtSize(f.s)) + "</span></li>";
       }).join("");
+      window._detail = { id: d.id, name: d.name };
       view.innerHTML =
         '<a class="back" href="javascript:history.back()">‹ နောက်သို့</a>' +
         '<div class="banner" style="' + coverStyle(d.id) + '">' + esc(initials(d.name)) + "</div>" +
@@ -211,7 +212,10 @@
         '<div class="buy-note">ငွေပေးချေမှုနှင့် ဖိုင်ပို့ဆောင်မှုကို Telegram bot မှတစ်ဆင့် ဆောင်ရွက်ပါမယ်</div>' +
         '<div class="buybar"><div class="bprice">' + esc(price(d.price)) +
         "<small>တစ်စုံလျှင်</small></div>" +
-        '<a class="buybtn" href="' + buyUrl(d.id) + '" target="_blank" rel="noopener">ဝယ်ယူမယ်</a></div>';
+        '<div class="buybtns">' +
+        '<a class="buybtn" href="' + buyUrl(d.id) + '" target="_blank" rel="noopener">ဝယ်ယူမယ်</a>' +
+        '<button class="gmailbtn" onclick="window.RCChat && RCChat.orderViaEmail()">📧 Gmail / Drive နဲ့ မှာမယ်</button>' +
+        "</div></div>";
       window.scrollTo(0, 0);
     }).catch(function () {
       view.innerHTML = '<a class="back" href="#/">‹ နောက်သို့</a>' +
@@ -221,6 +225,7 @@
 
   function route() {
     var h = location.hash || "#/";
+    document.body.classList.toggle("has-buybar", h.indexOf("#/s/") === 0);
     if (h.indexOf("#/s/") === 0) renderDetail(h.slice(4).split("?")[0]);
     else if (h.indexOf("#/search/") === 0) renderSearch(decodeURIComponent(h.slice(9)));
     else {

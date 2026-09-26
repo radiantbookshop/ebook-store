@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#161616">
 <title>Radiant eBookshop — အီးဘုတ်ခ်စာအုပ်ဆိုင်</title>
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="chat.css">
 </head>
 <body>
 <header class="topbar">
@@ -20,6 +21,24 @@
 </header>
 <main id="view"></main>
 <footer class="foot">ဝယ်ယူမှုအားလုံး Telegram bot မှတစ်ဆင့် လုံခြုံစွာ ဆောင်ရွက်ပါသည် 📩</footer>
+<button id="chatFab" aria-label="အကူအညီ chat">💬<span class="dot"></span></button>
+<div id="chatPanel" role="dialog" aria-label="အကူအညီ chat">
+  <div id="chatHead">
+    <span class="mark">R</span>
+    <div><b>အကူအညီ</b><small>Radiant eBookshop • အွန်လိုင်း</small></div>
+    <button class="x" aria-label="ပိတ်ရန်">✕</button>
+  </div>
+  <div id="chatMsgs"></div>
+  <div id="chatQuick"></div>
+  <form id="chatForm">
+    <input type="file" id="chatFile" accept="image/*">
+    <button type="button" class="imgbtn" aria-label="ပုံတင်ရန်">📷</button>
+    <input type="text" id="chatInput" placeholder="စာရိုက်ပါ…" autocomplete="off">
+    <button type="submit" class="sendbtn" aria-label="ပို့ရန်">➤</button>
+  </form>
+</div>
+<script src="config.js"></script>
 <script src="app.js"></script>
+<script src="chat.js"></script>
 </body>
 </html>
