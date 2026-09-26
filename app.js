@@ -38,6 +38,40 @@
     var t = (w[0] ? w[0][0] : "") + (w[1] ? w[1][0] : "");
     return (t || "?").toUpperCase();
   }
+  // real cover images (fetched from Open Library); falls back to gradient
+  var coverMap = {};
+  var coversReady = null;
+  function ensureCovers() {
+    if (!coversReady) {
+      coversReady = getJSON("data/covers.json").then(function (d) {
+        coverMap = d || {};
+        return coverMap;
+      }).catch(function () { return coverMap; });
+    }
+    return coversReady;
+  }
+  // kick off early so it is likely ready before first render
+  ensureCovers();
+  function coverHTML(id, name) {
+    var c = coverMap[id] || null;
+    if (c) {
+      return '<img class="coverimg" loading="lazy" src="' + esc(c) + '" alt="' +
+        esc(name) + '" onerror="this.outerHTML=window.__coverFallback(\'' + id + '\',\'' +
+        esc(name).replace(/'/g, "\\'") + '\')">';
+    }
+    return '<div class="cover" style="' + coverStyle(id) + '">' + esc(initials(name)) + "</div>";
+  }
+  function coverBannerHTML(id, name) {
+    var c = coverMap[id] || null;
+    if (c) {
+      return '<div class="banner hasimg"><img loading="lazy" src="' + esc(c) + '" alt="' +
+        esc(name) + '"></div>';
+    }
+    return '<div class="banner" style="' + coverStyle(id) + '">' + esc(initials(name)) + "</div>";
+  }
+  window.__coverFallback = function (id, name) {
+    return '<div class="cover" style="' + coverStyle(id) + '">' + esc(initials(name)) + "</div>";
+  };
 
   var view = document.getElementById("view");
   var qInput = document.getElementById("q");
@@ -66,7 +100,7 @@
 
   function cardHTML(c) {
     return '<a class="card" href="#/s/' + c.id + '">' +
-      '<div class="cover" style="' + coverStyle(c.id) + '">' + esc(initials(c.name)) + "</div>" +
+      coverHTML(c.id, c.name) +
       '<div class="cbody"><div class="cname">' + esc(c.name) + "</div>" +
       '<div class="cmeta">' + mm(c.file_count) + " ဖိုင် · " + esc(fmtSize(c.total_size)) + "</div>" +
       '<div class="cprice">' + esc(price(c.price)) + "</div></div></a>";
@@ -97,7 +131,8 @@
 
   function renderHome() {
     view.innerHTML = '<div class="loading">ခဏစောင့်ပါ…</div>';
-    ensureHome().then(function (d) {
+    Promise.all([ensureHome(), ensureCovers()]).then(function (arr) {
+      var d = arr[0];
       var html = "";
       d.series.forEach(function (r) {
         html += rowHTML(r.name, mm(r.count) + " စုံ", r.sets);
@@ -157,7 +192,8 @@
     qInput.value = q;
     if (!q) { location.hash = "#/"; return; }
     view.innerHTML = '<div class="loading">ရှာနေပါတယ်…</div>';
-    ensureAll().then(function (sets) {
+    Promise.all([ensureAll(), ensureCovers()]).then(function (arr) {
+      var sets = arr[0];
       var hits = searchSets(sets, q);
       var html = '<a class="back" href="#/">‹ နောက်သို့</a>' +
         '<div class="res-head">"' + esc(q) + '" နဲ့ ပတ်သက်တာ ' +
@@ -169,7 +205,7 @@
         html += '<div class="res-list">' + hits.slice(0, 120).map(function (s, i) {
           return '<a class="res-item" href="#/s/' + s.id + '">' +
             '<span class="rnum">' + (i + 1) + ".</span>" +
-            '<div class="cover" style="' + coverStyle(s.id) + '">' + esc(initials(s.name)) + "</div>" +
+            coverHTML(s.id, s.name) +
             '<div class="rbody"><div class="rname">' + esc(s.name) + "</div>" +
             '<div class="rmeta">' + mm(s.file_count) + " ဖိုင် · " + esc(fmtSize(s.total_size)) + "</div></div>" +
             '<div class="rprice">' + esc(price(s.price)) + "</div></a>";
@@ -187,7 +223,8 @@
 
   function renderDetail(id) {
     view.innerHTML = '<div class="loading">ခဏစောင့်ပါ…</div>';
-    getJSON("data/sets/" + encodeURIComponent(id) + ".json").then(function (d) {
+    Promise.all([getJSON("data/sets/" + encodeURIComponent(id) + ".json"), ensureCovers()]).then(function (arr) {
+      var d = arr[0];
       var comps = (d.components && d.components.length)
         ? d.components.join(", ") : "—";
       var files = (d.items || []).map(function (f) {
@@ -200,7 +237,7 @@
       window._detail = { id: d.id, name: d.name };
       view.innerHTML =
         '<a class="back" href="javascript:history.back()">‹ နောက်သို့</a>' +
-        '<div class="banner" style="' + coverStyle(d.id) + '">' + esc(initials(d.name)) + "</div>" +
+        coverBannerHTML(d.id, d.name) +
         "<h1 class='dtitle'>" + esc(d.name) + "</h1>" +
         '<div class="dseries">' + esc(d.series || "") + "</div>" +
         '<div class="chips">' + (d.components || []).map(function (c) {
