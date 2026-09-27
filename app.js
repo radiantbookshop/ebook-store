@@ -44,7 +44,7 @@
   function ensureCovers() {
     if (!coversReady) {
       // cache-bust: covers.json grows as the fetcher runs; never serve stale
-      var bust = "data/covers.json?v=" + Math.floor(Date.now() / 3600000);
+      var bust = "data/covers.json?v=" + Math.floor(Date.now() / 300000);
       coversReady = fetch(bust, { cache: "no-cache" }).then(function (r) {
         if (!r.ok) throw new Error("http " + r.status);
         return r.json();
