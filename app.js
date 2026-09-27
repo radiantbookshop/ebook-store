@@ -187,6 +187,9 @@
     Promise.all([ensureHome(), ensureCovers(), ensureAll(), ensureCats()]).then(function (arr) {
       var d = arr[0], cmap = arr[1], sets = arr[2];
       var html = "";
+      // When a specific category is active, show ONLY the filtered grid (no Featured/series)
+      var catActive = activeCat !== "all";
+      if (!catActive) {
       // Featured: books with manual covers (user-curated) at the very top
       // Merge hardcoded manual covers into coverMap (bypasses stale covers.json)
       Object.keys(MANUAL_COVERS).forEach(function (id) {
@@ -208,7 +211,9 @@
       if (d.new && d.new.length) {
         html += rowHTML("🆕 အသစ်ထပ်တိုးများ", mm(d.new.length) + " စုံ", d.new);
       }
-      html += '<h2 class="section-title">📚 စာအုပ်အားလုံး</h2><div id="homeAll"><div class="loading">ခဏစောင့်ပါ…</div></div>';
+      } // end if (!catActive)
+      var catTitles = {all: "📚 စာအုပ်အားလုံး", english: "📚 English စာအုပ်များ", maths: "📚 Maths စာအုပ်များ", science: "📚 Science စာအုပ်များ", others: "📚 အခြား စာအုပ်များ"};
+      html += '<h2 class="section-title">' + (catTitles[activeCat] || catTitles.all) + '</h2><div id="homeAll"><div class="loading">ခဏစောင့်ပါ…</div></div>';
       view.innerHTML = html;
       Promise.all([ensureAll(), ensureCats()]).then(function (arr2) {
         var sets = arr2[0];
