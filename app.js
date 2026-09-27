@@ -184,7 +184,7 @@
 
   function renderHome() {
     view.innerHTML = '<div class="loading">ခဏစောင့်ပါ…</div>';
-    Promise.all([ensureHome(), ensureCovers(), ensureAll()]).then(function (arr) {
+    Promise.all([ensureHome(), ensureCovers(), ensureAll(), ensureCats()]).then(function (arr) {
       var d = arr[0], cmap = arr[1], sets = arr[2];
       var html = "";
       // Featured: books with manual covers (user-curated) at the very top
@@ -208,35 +208,22 @@
       if (d.new && d.new.length) {
         html += rowHTML("🆕 အသစ်ထပ်တိုးများ", mm(d.new.length) + " စုံ", d.new);
       }
-      html += '<h2 class="section-title">📚 စာအုပ်အားလုံး <span id="catLabel" style="font-size:14px;color:#f5a623"></span></h2><div id="homeAll"><div class="loading">ခဏစောင့်ပါ…</div></div>';
+      html += '<h2 class="section-title">📚 စာအုပ်အားလုံး</h2><div id="homeAll"><div class="loading">ခဏစောင့်ပါ…</div></div>';
       view.innerHTML = html;
-      // catMap is already loaded by outer Promise.all - filter synchronously
-      try {
+      Promise.all([ensureAll(), ensureCats()]).then(function (arr2) {
+        var sets = arr2[0];
         allList = filterByCat(sets.slice()).sort(function (a, b) {
           return a.name.localeCompare(b.name, undefined, { numeric: true });
         });
-      } catch (e) {
-        allList = sets.slice().sort(function (a, b) {
-          return a.name.localeCompare(b.name, undefined, { numeric: true });
-        });
-      }
-      // Update category label
-      var catNames = {all: "", english: "— English", maths: "— Maths", science: "— Science", others: "— Others"};
-      var lbl = document.getElementById("catLabel");
-      if (lbl) lbl.textContent = catNames[activeCat] || "";
-      shownCount = 0;
-      var host = document.getElementById("homeAll");
-      if (host) {
-        if (!allList.length) {
-          host.innerHTML = '<div class="empty">စာအုပ်မရှိပါ။</div>';
-        } else {
-          host.innerHTML = gridHTML(allList.slice(0, PAGE)) +
-            '<div class="more-wrap"><button class="more-btn" id="moreBtn">နောက်ထပ် ပြပါ</button></div>';
-          shownCount = Math.min(PAGE, allList.length);
-          document.getElementById("moreBtn").addEventListener("click", renderMore);
-          renderMoreBtn();
-        }
-      }
+        shownCount = 0;
+        var host = document.getElementById("homeAll");
+        if (!host) return;
+        host.innerHTML = gridHTML(allList.slice(0, PAGE)) +
+          '<div class="more-wrap"><button class="more-btn" id="moreBtn">နောက်ထပ် ပြပါ</button></div>';
+        shownCount = Math.min(PAGE, allList.length);
+        document.getElementById("moreBtn").addEventListener("click", renderMore);
+        renderMoreBtn();
+      });
       function renderMoreBtn() {
         var btn = document.getElementById("moreBtn");
         if (btn && shownCount >= allList.length) btn.style.display = "none";
@@ -358,37 +345,23 @@
     var q = qInput.value.trim();
     if (q) location.hash = "#/search/" + encodeURIComponent(q);
   });
-  // Start loading cats in background immediately (don't block rendering)
-  ensureCats();
   window.addEventListener("hashchange", route);
   // Category tab clicks
-  var catTabsEl = document.getElementById("catTabs");
-  if (catTabsEl) {
-    catTabsEl.addEventListener("click", function (e) {
-      var el = e.target;
-      // Walk up to find button (robust for all browsers)
-      while (el && el !== catTabsEl) {
-        if (el.tagName === "BUTTON" && el.getAttribute("data-cat")) break;
-        el = el.parentNode;
-      }
-      if (!el || el === catTabsEl) return;
-      var btn = el;
-      activeCat = btn.getAttribute("data-cat");
-      var buttons = catTabsEl.querySelectorAll("button");
-      for (var i = 0; i < buttons.length; i++) {
-        buttons[i].classList.toggle("active", buttons[i] === btn);
-      }
-      // Re-render home with filter - wait for cats.json if needed
-      var h = location.hash || "#/";
-      ensureCats().then(function () {
-        if (h === "#/" || h === "" || h === "#") {
-          renderHome();
-        } else {
-          location.hash = "#/";
-          setTimeout(renderHome, 50);
-        }
-      });
-    });
-  }
+  document.getElementById("catTabs").addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-cat]");
+    if (!btn) return;
+    activeCat = btn.getAttribute("data-cat");
+    var buttons = this.querySelectorAll("button");
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].classList.toggle("active", buttons[i] === btn);
+    }
+    // Re-render home with filter (if on home page)
+    var h = location.hash || "#/";
+    if (h === "#/" || h === "") {
+      route();
+    } else {
+      location.hash = "#/";
+    }
+  });
   route();
 })();
