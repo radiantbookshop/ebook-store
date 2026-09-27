@@ -102,6 +102,23 @@
     if (!homeData) homeData = getJSON("data/home.json");
     return homeData;
   }
+  // Category tabs: English, Maths, Science, Others
+  var catMap = null, catMapLoading = null, activeCat = "all";
+  function ensureCats() {
+    if (catMap) return Promise.resolve(catMap);
+    if (!catMapLoading) {
+      catMapLoading = getJSON("data/cats.json").then(function (d) {
+        catMap = d || {};
+        return catMap;
+      }).catch(function () { catMap = {}; return catMap; });
+    }
+    return catMapLoading;
+  }
+  function filterByCat(sets) {
+    if (activeCat === "all" || !catMap) return sets;
+    return sets.filter(function (s) { return (catMap[s.id] || "others") === activeCat; });
+  }
+
   function ensureAll() {
     if (allSets) return Promise.resolve(allSets);
     if (!allSetsLoading) {
@@ -167,7 +184,7 @@
 
   function renderHome() {
     view.innerHTML = '<div class="loading">ခဏစောင့်ပါ…</div>';
-    Promise.all([ensureHome(), ensureCovers(), ensureAll()]).then(function (arr) {
+    Promise.all([ensureHome(), ensureCovers(), ensureAll(), ensureCats()]).then(function (arr) {
       var d = arr[0], cmap = arr[1], sets = arr[2];
       var html = "";
       // Featured: books with manual covers (user-curated) at the very top
@@ -193,8 +210,9 @@
       }
       html += '<h2 class="section-title">📚 စာအုပ်အားလုံး</h2><div id="homeAll"><div class="loading">ခဏစောင့်ပါ…</div></div>';
       view.innerHTML = html;
-      ensureAll().then(function (sets) {
-        allList = sets.slice().sort(function (a, b) {
+      Promise.all([ensureAll(), ensureCats()]).then(function (arr2) {
+        var sets = arr2[0];
+        allList = filterByCat(sets.slice()).sort(function (a, b) {
           return a.name.localeCompare(b.name, undefined, { numeric: true });
         });
         shownCount = 0;
@@ -328,5 +346,22 @@
     if (q) location.hash = "#/search/" + encodeURIComponent(q);
   });
   window.addEventListener("hashchange", route);
+  // Category tab clicks
+  document.getElementById("catTabs").addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-cat]");
+    if (!btn) return;
+    activeCat = btn.getAttribute("data-cat");
+    var buttons = this.querySelectorAll("button");
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].classList.toggle("active", buttons[i] === btn);
+    }
+    // Re-render home with filter (if on home page)
+    var h = location.hash || "#/";
+    if (h === "#/" || h === "") {
+      route();
+    } else {
+      location.hash = "#/";
+    }
+  });
   route();
 })();
