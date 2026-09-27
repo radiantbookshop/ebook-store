@@ -184,7 +184,7 @@
 
   function renderHome() {
     view.innerHTML = '<div class="loading">ခဏစောင့်ပါ…</div>';
-    Promise.all([ensureHome(), ensureCovers(), ensureAll(), ensureCats()]).then(function (arr) {
+    Promise.all([ensureHome(), ensureCovers(), ensureAll()]).then(function (arr) {
       var d = arr[0], cmap = arr[1], sets = arr[2];
       var html = "";
       // Featured: books with manual covers (user-curated) at the very top
@@ -358,6 +358,8 @@
     var q = qInput.value.trim();
     if (q) location.hash = "#/search/" + encodeURIComponent(q);
   });
+  // Start loading cats in background immediately (don't block rendering)
+  ensureCats();
   window.addEventListener("hashchange", route);
   // Category tab clicks
   var catTabsEl = document.getElementById("catTabs");
@@ -376,15 +378,16 @@
       for (var i = 0; i < buttons.length; i++) {
         buttons[i].classList.toggle("active", buttons[i] === btn);
       }
-      // Re-render home with filter
+      // Re-render home with filter - wait for cats.json if needed
       var h = location.hash || "#/";
-      if (h === "#/" || h === "" || h === "#") {
-        renderHome();
-      } else {
-        location.hash = "#/";
-        // hashchange will trigger route()->renderHome(), but force it too
-        setTimeout(renderHome, 50);
-      }
+      ensureCats().then(function () {
+        if (h === "#/" || h === "" || h === "#") {
+          renderHome();
+        } else {
+          location.hash = "#/";
+          setTimeout(renderHome, 50);
+        }
+      });
     });
   }
   route();
