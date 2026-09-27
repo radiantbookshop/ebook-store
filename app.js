@@ -50,8 +50,18 @@
         return r.json();
       }).then(function (d) {
         coverMap = d || {};
+        // Always merge hardcoded manual covers (immune to stale cache)
+        Object.keys(MANUAL_COVERS).forEach(function (id) {
+          coverMap[id] = MANUAL_COVERS[id];
+        });
         return coverMap;
-      }).catch(function () { return coverMap; });
+      }).catch(function () {
+        // Even if fetch fails, manual covers still work
+        Object.keys(MANUAL_COVERS).forEach(function (id) {
+          coverMap[id] = MANUAL_COVERS[id];
+        });
+        return coverMap;
+      });
     }
     return coversReady;
   }
@@ -134,15 +144,35 @@
     }
   }
 
+  // Hardcoded manual covers (user-curated) - always available, bypasses covers.json cache
+  var MANUAL_COVERS = {
+    "319fe3d0e5ae": "data/manual_covers/319fe3d0e5ae.jpg",
+    "9ea3bcd4e121": "data/manual_covers/9ea3bcd4e121.jpg",
+    "a1c54e08b67d": "data/manual_covers/a1c54e08b67d.jpg",
+    "210c52da": "data/manual_covers/210c52da.jpg",
+    "e872380a": "data/manual_covers/e872380a.jpg",
+    "50a0a047": "data/manual_covers/50a0a047.jpg",
+    "39179264": "data/manual_covers/39179264.jpg",
+    "0a70c8e7": "data/manual_covers/0a70c8e7.jpg",
+    "2e47135c": "data/manual_covers/2e47135c.jpg",
+    "fb6f716a": "data/manual_covers/fb6f716a.jpg",
+    "e93bb4d6": "data/manual_covers/e93bb4d6.jpg",
+    "417d54e4": "data/manual_covers/417d54e4.jpg",
+    "b7815826": "data/manual_covers/b7815826.jpg",
+    "46be39f3": "data/manual_covers/46be39f3.jpg"
+  };
+
   function renderHome() {
     view.innerHTML = '<div class="loading">ခဏစောင့်ပါ…</div>';
     Promise.all([ensureHome(), ensureCovers(), ensureAll()]).then(function (arr) {
       var d = arr[0], cmap = arr[1], sets = arr[2];
       var html = "";
       // Featured: books with manual covers (user-curated) at the very top
-      var manualIds = Object.keys(cmap).filter(function (id) {
-        return cmap[id] && cmap[id].indexOf("manual_covers") > -1;
+      // Merge hardcoded manual covers into coverMap (bypasses stale covers.json)
+      Object.keys(MANUAL_COVERS).forEach(function (id) {
+        cmap[id] = MANUAL_COVERS[id];
       });
+      var manualIds = Object.keys(MANUAL_COVERS);
       if (manualIds.length) {
         var byId = {};
         sets.forEach(function (s) { byId[s.id] = s; });
