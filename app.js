@@ -136,9 +136,22 @@
 
   function renderHome() {
     view.innerHTML = '<div class="loading">ခဏစောင့်ပါ…</div>';
-    Promise.all([ensureHome(), ensureCovers()]).then(function (arr) {
-      var d = arr[0];
+    Promise.all([ensureHome(), ensureCovers(), ensureAll()]).then(function (arr) {
+      var d = arr[0], cmap = arr[1], sets = arr[2];
       var html = "";
+      // Featured: books with manual covers (user-curated) at the very top
+      var manualIds = Object.keys(cmap).filter(function (id) {
+        return cmap[id] && cmap[id].indexOf("manual_covers") > -1;
+      });
+      if (manualIds.length) {
+        var byId = {};
+        sets.forEach(function (s) { byId[s.id] = s; });
+        var featured = manualIds.map(function (id) { return byId[id]; })
+          .filter(Boolean);
+        if (featured.length) {
+          html += rowHTML("⭐ Featured", mm(featured.length) + " စုံ", featured);
+        }
+      }
       d.series.forEach(function (r) {
         html += rowHTML(r.name, mm(r.count) + " စုံ", r.sets);
       });
