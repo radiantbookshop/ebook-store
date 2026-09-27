@@ -208,22 +208,35 @@
       if (d.new && d.new.length) {
         html += rowHTML("🆕 အသစ်ထပ်တိုးများ", mm(d.new.length) + " စုံ", d.new);
       }
-      html += '<h2 class="section-title">📚 စာအုပ်အားလုံး</h2><div id="homeAll"><div class="loading">ခဏစောင့်ပါ…</div></div>';
+      html += '<h2 class="section-title">📚 စာအုပ်အားလုံး <span id="catLabel" style="font-size:14px;color:#f5a623"></span></h2><div id="homeAll"><div class="loading">ခဏစောင့်ပါ…</div></div>';
       view.innerHTML = html;
-      Promise.all([ensureAll(), ensureCats()]).then(function (arr2) {
-        var sets = arr2[0];
+      // catMap is already loaded by outer Promise.all - filter synchronously
+      try {
         allList = filterByCat(sets.slice()).sort(function (a, b) {
           return a.name.localeCompare(b.name, undefined, { numeric: true });
         });
-        shownCount = 0;
-        var host = document.getElementById("homeAll");
-        if (!host) return;
-        host.innerHTML = gridHTML(allList.slice(0, PAGE)) +
-          '<div class="more-wrap"><button class="more-btn" id="moreBtn">နောက်ထပ် ပြပါ</button></div>';
-        shownCount = Math.min(PAGE, allList.length);
-        document.getElementById("moreBtn").addEventListener("click", renderMore);
-        renderMoreBtn();
-      });
+      } catch (e) {
+        allList = sets.slice().sort(function (a, b) {
+          return a.name.localeCompare(b.name, undefined, { numeric: true });
+        });
+      }
+      // Update category label
+      var catNames = {all: "", english: "— English", maths: "— Maths", science: "— Science", others: "— Others"};
+      var lbl = document.getElementById("catLabel");
+      if (lbl) lbl.textContent = catNames[activeCat] || "";
+      shownCount = 0;
+      var host = document.getElementById("homeAll");
+      if (host) {
+        if (!allList.length) {
+          host.innerHTML = '<div class="empty">စာအုပ်မရှိပါ။</div>';
+        } else {
+          host.innerHTML = gridHTML(allList.slice(0, PAGE)) +
+            '<div class="more-wrap"><button class="more-btn" id="moreBtn">နောက်ထပ် ပြပါ</button></div>';
+          shownCount = Math.min(PAGE, allList.length);
+          document.getElementById("moreBtn").addEventListener("click", renderMore);
+          renderMoreBtn();
+        }
+      }
       function renderMoreBtn() {
         var btn = document.getElementById("moreBtn");
         if (btn && shownCount >= allList.length) btn.style.display = "none";
