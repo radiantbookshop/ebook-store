@@ -31,7 +31,20 @@ a { color: inherit; text-decoration: none; }
   display: flex; flex-direction: column; gap: 10px;
 }
 .toprow {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.cattabs {
+  display: flex; gap: 6px; overflow-x: auto; flex: 1; justify-content: center;
+  scrollbar-width: none;
+}
+.cattabs::-webkit-scrollbar { display: none; }
+.cattabs button {
+  background: #222; border: 1px solid var(--line); color: #ccc;
+  border-radius: 20px; padding: 6px 12px; font-size: 13px; white-space: nowrap;
+  cursor: pointer;
+}
+.cattabs button.active {
+  background: #f5a623; border-color: #f5a623; color: #161616; font-weight: 700;
 }
 .homebtn {
   font-size: 22px; text-decoration: none;
