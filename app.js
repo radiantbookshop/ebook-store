@@ -347,21 +347,32 @@
   });
   window.addEventListener("hashchange", route);
   // Category tab clicks
-  document.getElementById("catTabs").addEventListener("click", function (e) {
-    var btn = e.target.closest("button[data-cat]");
-    if (!btn) return;
-    activeCat = btn.getAttribute("data-cat");
-    var buttons = this.querySelectorAll("button");
-    for (var i = 0; i < buttons.length; i++) {
-      buttons[i].classList.toggle("active", buttons[i] === btn);
-    }
-    // Re-render home with filter (if on home page)
-    var h = location.hash || "#/";
-    if (h === "#/" || h === "") {
-      route();
-    } else {
-      location.hash = "#/";
-    }
-  });
+  var catTabsEl = document.getElementById("catTabs");
+  if (catTabsEl) {
+    catTabsEl.addEventListener("click", function (e) {
+      var el = e.target;
+      // Walk up to find button (robust for all browsers)
+      while (el && el !== catTabsEl) {
+        if (el.tagName === "BUTTON" && el.getAttribute("data-cat")) break;
+        el = el.parentNode;
+      }
+      if (!el || el === catTabsEl) return;
+      var btn = el;
+      activeCat = btn.getAttribute("data-cat");
+      var buttons = catTabsEl.querySelectorAll("button");
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].classList.toggle("active", buttons[i] === btn);
+      }
+      // Re-render home with filter
+      var h = location.hash || "#/";
+      if (h === "#/" || h === "" || h === "#") {
+        renderHome();
+      } else {
+        location.hash = "#/";
+        // hashchange will trigger route()->renderHome(), but force it too
+        setTimeout(renderHome, 50);
+      }
+    });
+  }
   route();
 })();
