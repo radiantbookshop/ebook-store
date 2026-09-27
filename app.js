@@ -159,7 +159,10 @@
     "e93bb4d6": "data/manual_covers/e93bb4d6.jpg",
     "417d54e4": "data/manual_covers/417d54e4.jpg",
     "b7815826": "data/manual_covers/b7815826.jpg",
-    "46be39f3": "data/manual_covers/46be39f3.jpg"
+    "46be39f3": "data/manual_covers/46be39f3.jpg",
+    "efec7422baca": "data/manual_covers/efec7422baca.jpg",
+    "e315c7c24149": "data/manual_covers/e315c7c24149.jpg",
+    "1ae71dc3ea98": "data/manual_covers/1ae71dc3ea98.jpg"
   };
 
   function renderHome() {
