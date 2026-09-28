@@ -140,7 +140,9 @@
 
   function rowHTML(title, countLabel, cards) {
     return '<section class="row"><div class="rowhead"><h2>' + esc(title) + "</h2>" +
-      '<span class="count">' + countLabel + "</span></div>" +
+      '<span class="count">' + countLabel + "</span>" +
+      '<span class="railnav"><button class="railbtn" data-dir="-1" aria-label="‹">‹</button>' +
+      '<button class="railbtn" data-dir="1" aria-label="›">›</button></span></div>' +
       '<div class="rail">' + cards.map(cardHTML).join("") + "</div></section>";
   }
 
@@ -375,6 +377,16 @@
     if (q) location.hash = "#/search/" + encodeURIComponent(q);
   });
   window.addEventListener("hashchange", route);
+  // Rail left/right nav buttons (desktop)
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest("button.railbtn");
+    if (!btn) return;
+    var row = btn.closest("section.row");
+    var rail = row && row.querySelector(".rail");
+    if (!rail) return;
+    var dir = parseInt(btn.getAttribute("data-dir"), 10) || 1;
+    rail.scrollBy({ left: dir * rail.clientWidth * 0.8, behavior: "smooth" });
+  });
   // Category tab clicks
   document.getElementById("catTabs").addEventListener("click", function (e) {
     var btn = e.target.closest("button[data-cat]");
