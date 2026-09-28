@@ -356,9 +356,11 @@
         '<div class="buybar"><div class="bprice">' + esc(price(d.price)) +
         "<small>တစ်စုံလျှင်</small></div>" +
         '<div class="buybtns">' +
-        '<a class="buybtn" href="' + buyUrl(d.id) + '" target="_blank" rel="noopener">ဝယ်ယူမယ်</a>' +
-        '<button class="gmailbtn" onclick="window.RCChat && RCChat.orderViaEmail()">📧 Gmail / Drive နဲ့ မှာမယ်</button>' +
-        "</div></div>";
+        '<button class="buybtn" onclick="var o=document.getElementById(\'buyOpts\');o.style.display=o.style.display===\'none\'?\'flex\':\'none\';">ဝယ်ယူမယ်</button>' +
+        '<div class="buyopts" id="buyOpts" style="display:none">' +
+        '<a class="buyopt" href="' + buyUrl(d.id) + '" target="_blank" rel="noopener">Telegram က မှာယူမယ်</a>' +
+        '<button class="buyopt" onclick="window.RCChat && RCChat.orderViaEmail()">Gmail လိပ်စာနဲ့ မှာယူမယ်</button>' +
+        "</div></div></div>";
       window.scrollTo(0, 0);
     }).catch(function () {
       view.innerHTML = '<a class="back" href="#/">‹ နောက်သို့</a>' +
