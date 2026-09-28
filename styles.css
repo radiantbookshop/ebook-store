@@ -104,6 +104,19 @@ a { color: inherit; text-decoration: none; }
 .rail::-webkit-scrollbar { display: none; }
 .rail .card { flex: 0 0 148px; scroll-snap-align: start; }
 
+/* row nav buttons (desktop) */
+.railnav { margin-left: auto; display: none; gap: 6px; }
+@media (hover: hover) and (pointer: fine) {
+  .railnav { display: flex; }
+}
+.railbtn {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--card);
+  color: var(--fg); font-size: 18px; line-height: 1;
+  cursor: pointer; padding: 0 0 2px;
+}
+.railbtn:hover { background: var(--accent); border-color: var(--accent); color: #161616; }
+
 /* product card */
 .card {
   background: var(--card); border: 1px solid var(--line);
