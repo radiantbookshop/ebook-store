@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radiant eBookshop - Admin</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, sans-serif; background: #161616; color: #eee; }
+  .header { background: #1e1e1e; padding: 15px; border-bottom: 2px solid #f5a623; position: sticky; top: 0; z-index: 10; }
+  .header h1 { font-size: 18px; color: #f5a623; }
+  .login { max-width: 400px; margin: 50px auto; padding: 20px; background: #1e1e1e; border-radius: 8px; }
+  .login input { width: 100%; padding: 12px; margin: 10px 0; background: #2a2a2a; border: 1px solid #444; color: #eee; border-radius: 4px; }
+  .login button { width: 100%; padding: 12px; background: #f5a623; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+  .threads { max-width: 800px; margin: 0 auto; padding: 15px; }
+  .thread-item { background: #1e1e1e; margin: 10px 0; padding: 15px; border-radius: 8px; cursor: pointer; border-left: 3px solid #444; }
+  .thread-item.has-image { border-left-color: #f5a623; }
+  .thread-item:hover { background: #252525; }
+  .thread-meta { font-size: 12px; color: #888; margin-top: 5px; }
+  .chat-view { max-width: 800px; margin: 0 auto; padding: 15px; display: none; }
+  .back-btn { background: #333; color: #eee; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; margin-bottom: 15px; }
+  .msg { margin: 10px 0; padding: 10px 15px; border-radius: 8px; max-width: 80%; }
+  .msg.v { background: #2a4a2a; margin-left: auto; }
+  .msg.o { background: #2a2a4a; }
+  .msg.sys { background: #333; font-size: 13px; color: #aaa; text-align: center; max-width: 100%; }
+  .msg img { max-width: 100%; border-radius: 4px; margin-top: 8px; }
+  .msg-time { font-size: 11px; color: #888; margin-top: 5px; }
+  .approve-bar { background: #1e1e1e; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center; }
+  .approve-bar button { padding: 12px 30px; margin: 0 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 16px; }
+  .btn-approve { background: #4caf50; color: white; }
+  .btn-reject { background: #f44336; color: white; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📚 Radiant eBookshop - Admin</h1>
+</div>
+
+<div id="loginView" class="login">
+  <h2 style="margin-bottom:15px;">Admin Login</h2>
+  <input type="password" id="secretInput" placeholder="Job Secret">
+  <button onclick="doLogin()">ဝင်မယ်</button>
+  <p id="loginErr" style="color:#f44336; margin-top:10px;"></p>
+</div>
+
+<div id="threadsView" class="threads hidden">
+  <h2 style="margin-bottom:15px;">💬 Chat Threads</h2>
+  <div id="threadList"></div>
+</div>
+
+<div id="chatView" class="chat-view">
+  <button class="back-btn" onclick="showThreads()">← နောက်သို့</button>
+  <div id="chatHeader" style="margin-bottom:15px;"></div>
+  <div id="approveBar" class="approve-bar hidden">
+    <p style="margin-bottom:10px;">ဒီ order ကို approve လုပ်မလား?</p>
+    <button class="btn-approve" onclick="decideOrder(true)">✅ Approve</button>
+    <button class="btn-reject" onclick="decideOrder(false)">❌ Reject</button>
+  </div>
+  <div id="chatMessages"></div>
+</div>
+
+<script>
+const WORKER = 'https://radiant-ebook-support.zuyaraye.workers.dev';
+let jobSecret = localStorage.getItem('admin_secret') || '';
+let currentTid = null;
+let currentOrder = null;
+
+if (jobSecret) {
+  document.getElementById('loginView').classList.add('hidden');
+  loadThreads();
+}
+
+function doLogin() {
+  jobSecret = document.getElementById('secretInput').value.trim();
+  if (!jobSecret) return;
+  localStorage.setItem('admin_secret', jobSecret);
+  document.getElementById('loginView').classList.add('hidden');
+  loadThreads();
+}
+
+async function api(path, opts = {}) {
+  opts.headers = opts.headers || {};
+  opts.headers['X-Job-Secret'] = jobSecret;
+  const r = await fetch(WORKER + path, opts);
+  return r.json();
+}
+
+async function loadThreads() {
+  document.getElementById('threadsView').classList.remove('hidden');
+  document.getElementById('chatView').style.display = 'none';
+  const d = await api('/api/admin/threads');
+  if (!d.ok) {
+    document.getElementById('loginErr').textContent = 'Secret မှားနေတယ်';
+    document.getElementById('loginView').classList.remove('hidden');
+    document.getElementById('threadsView').classList.add('hidden');
+    return;
+  }
+  const list = document.getElementById('threadList');
+  if (!d.threads.length) {
+    list.innerHTML = '<p style="color:#888;">Thread မရှိသေးဘူး</p>';
+    return;
+  }
+  list.innerHTML = d.threads.map(t => `
+    <div class="thread-item ${t.has_image ? 'has-image' : ''}" onclick="openThread('${t.tid}')">
+      <div><strong>${t.email || '👤 ' + t.tid.slice(-6)}</strong> ${t.has_image ? '📷' : ''}</div>
+      <div class="thread-meta">${t.count} messages • ${new Date(t.last_ts).toLocaleString('my-MM')}</div>
+      <div style="font-size:13px; color:#aaa; margin-top:5px;">${escapeHtml(t.last_text)}</div>
+    </div>
+  `).join('');
+}
+
+async function openThread(tid) {
+  currentTid = tid;
+  document.getElementById('threadsView').classList.add('hidden');
+  document.getElementById('chatView').style.display = 'block';
+  const d = await api('/api/admin/thread?tid=' + encodeURIComponent(tid));
+  if (!d.ok) return;
+  
+  document.getElementById('chatHeader').innerHTML = `
+    <h3>${d.email ? '📧 ' + escapeHtml(d.email) : '👤 ' + tid.slice(-6)}</h3>
+  `;
+  
+  const msgs = document.getElementById('chatMessages');
+  msgs.innerHTML = d.messages.map(m => `
+    <div class="msg ${m.from}">
+      <div>${escapeHtml(m.text || '')}</div>
+      ${m.img_data ? `<img src="${m.img_data}" alt="receipt">` : ''}
+      <div class="msg-time">${new Date(m.ts).toLocaleString('my-MM')}</div>
+    </div>
+  `).join('');
+  msgs.scrollTop = msgs.scrollHeight;
+  
+  // Check if there's a pending order for this thread
+  // (orders are linked via visitor_id)
+  document.getElementById('approveBar').classList.add('hidden');
+}
+
+function showThreads() {
+  currentTid = null;
+  loadThreads();
+}
+
+async function decideOrder(approve) {
+  // TODO: link to order via visitor_id
+  alert(approve ? 'Approved!' : 'Rejected!');
+}
+
+function escapeHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
