@@ -36,6 +36,16 @@
     msgs.appendChild(m);
     msgs.scrollTop = msgs.scrollHeight;
   }
+  function addImgMsg(from, dataUrl) {
+    var m = el("div", "msg " + from);
+    var img = el("img");
+    img.src = dataUrl;
+    img.style.maxWidth = "100%";
+    img.style.borderRadius = "8px";
+    m.appendChild(img);
+    msgs.appendChild(m);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
   function setQuick(buttons) {
     quick.innerHTML = "";
     (buttons || []).forEach(function (b) {
@@ -111,12 +121,17 @@
       c.width = Math.round(img.width * scale);
       c.height = Math.round(img.height * scale);
       c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-      var b64 = c.toDataURL("image/jpeg", 0.8).split(",")[1];
+      var dataUrl = c.toDataURL("image/jpeg", 0.8);
+      var b64 = dataUrl.split(",")[1];
       URL.revokeObjectURL(img.src);
-      addMsg("v", "📷 ပြေစာပုံ ပို့လိုက်ပါတယ်");
+      // Show the actual image in chat (not just text)
+      addImgMsg("v", dataUrl);
       api("/api/chat/send", {
         method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ visitor_id: vid, text: "", image_b64: b64, image_name: file.name })
+      }).then(function (r) {
+        if (!r.ok) addMsg("o", "ပုံ ပို့ရာမှာ အမှားဖြစ်နေပါတယ် — ပြန်စမ်းကြည့်ပါ။");
+        else addMsg("o", "✅ ပြေစာပုံ ရရှိပါပြီ — စစ်ဆေးပြီးရင် ဖိုင်ပို့ပေးပါမယ်။");
       });
     };
     img.src = URL.createObjectURL(file);
