@@ -165,6 +165,12 @@
 
   // Hardcoded manual covers (user-curated) - always available, bypasses covers.json cache
   var MANUAL_COVERS = {
+    "013a9f61ad62": "data/manual_covers/013a9f61ad62.jpg",
+    "e890b6b6ad54": "data/manual_covers/e890b6b6ad54.jpg",
+    "403be5df585d": "data/manual_covers/403be5df585d.jpg",
+    "17443bb0e6c1": "data/manual_covers/17443bb0e6c1.jpg",
+    "0bacac194c9d": "data/manual_covers/0bacac194c9d.jpg",
+    "96a935f10d9d": "data/manual_covers/96a935f10d9d.jpg",
     "617369eaddf4": "data/manual_covers/617369eaddf4.jpg",
     "95cca2e24da9": "data/manual_covers/95cca2e24da9.jpg",
     "5d49c2520499": "data/manual_covers/5d49c2520499.jpg",
