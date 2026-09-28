@@ -336,7 +336,7 @@
       var files = (d.items || []).map(function (f) {
         var src = f.src === "local"
           ? '<span class="src local">ချက်ချင်းရ</span>'
-          : '<span class="src">' + esc(String(f.src).replace("@", "")) + "</span>";
+          : '';
         return '<li><span class="fn">' + esc(f.n) + src + '</span>' +
           '<span class="fs">' + esc(fmtSize(f.s)) + "</span></li>";
       }).join("");
