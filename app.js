@@ -248,8 +248,19 @@
       html += '<h2 class="section-title">' + (catTitles[activeCat] || catTitles.all) + '</h2><div id="homeAll"><div class="loading">ခဏစောင့်ပါ…</div></div>';
       view.innerHTML = html;
       Promise.all([ensureAll(), ensureCats()]).then(function (arr2) {
-        var sets = arr2[0];
+        var sets = arr2[0], cats = arr2[1];
+        // Education first (english/maths/science), covers prioritized, others (novels/anime) last
+        function catRank(s) {
+          var c = (cats && cats[s.id]) || "others";
+          if (c === "english" || c === "maths" || c === "science") return 0;
+          return 1;
+        }
+        function hasCover(s) { return (cmap && cmap[s.id]) ? 0 : 1; }
         allList = filterByCat(sets.slice()).sort(function (a, b) {
+          var r = catRank(a) - catRank(b);
+          if (r) return r;
+          r = hasCover(a) - hasCover(b);
+          if (r) return r;
           return a.name.localeCompare(b.name, undefined, { numeric: true });
         });
         shownCount = 0;
