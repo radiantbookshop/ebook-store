@@ -219,7 +219,9 @@
     "a17ae9611580": "data/manual_covers/a17ae9611580.jpg",
     "fe506b379ae5": "data/manual_covers/fe506b379ae5.jpg",
     "e3857f4e96a3": "data/manual_covers/e3857f4e96a3.jpg",
-    "7db88a9b6372": "data/manual_covers/7db88a9b6372.jpg"
+    "7db88a9b6372": "data/manual_covers/7db88a9b6372.jpg",
+    "483b6daf6a8f": "data/manual_covers/483b6daf6a8f.jpg",
+    "8ce78f37a701": "data/manual_covers/8ce78f37a701.jpg"
   };
 
   function renderHome() {
