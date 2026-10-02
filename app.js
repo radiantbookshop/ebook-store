@@ -250,6 +250,71 @@
     "8ce78f37a701": "data/manual_covers/8ce78f37a701.jpg"
   };
 
+
+  var heroTimer = null;
+  function heroHTML(featured) {
+    function slide(s) {
+      var img = coverMap[s.id]
+        ? '<img class="hero-img" src="' + esc(coverMap[s.id]) + '" alt="" loading="lazy">'
+        : '<div class="hero-img hero-fbk" style="' + coverStyle(s.id) + '">' +
+          esc(initials(s.name)) + "</div>";
+      return '<a class="hero-slide" href="#/s/' + s.id + '">' + img +
+        '<div class="hero-body"><div class="hero-tag">\u2B50 Featured</div>' +
+        '<div class="hero-title">' + esc(s.name) + "</div>" +
+        '<div class="hero-meta">' + mm(s.file_count) + " \u1016\u102d\u102f\u1004\u103a \u00B7 " + esc(fmtSize(s.total_size)) +
+        ' \u00B7 <span class="dlc">\u2B07 ' + mm(dlOf(s)) + " ကြိမ် ဒေါင်းပြီး</span></div>" +
+        '<div class="hero-price">' + esc(price(s.price)) + "</div></div></a>";
+    }
+    var dots = "";
+    featured.forEach(function (_, i) {
+      dots += '<button class="hero-dot' + (i === 0 ? " on" : "") +
+        '" type="button" data-i="' + i + '" aria-label="slide ' + (i + 1) + '"></button>';
+    });
+    return '<div class="hero-slider"><div class="hero-track" id="heroTrack">' +
+      featured.map(slide).join("") + "</div>" +
+      '<button class="hero-nav prev" type="button" id="heroPrev">\u2039</button>' +
+      '<button class="hero-nav next" type="button" id="heroNext">\u203A</button>' +
+      '<div class="hero-dots">' + dots + "</div></div>";
+  }
+  function initHero() {
+    var track = document.getElementById("heroTrack");
+    if (!track || track.children.length < 2) return;
+    var slides = track.children.length, idx = 0;
+    var dots = track.parentElement.querySelectorAll(".hero-dot");
+    function go(i) {
+      idx = (i + slides) % slides;
+      track.style.transform = "translateX(-" + idx * 100 + "%)";
+      Array.prototype.forEach.call(dots, function (d, j) {
+        d.classList.toggle("on", j === idx);
+      });
+    }
+    function auto() {
+      clearInterval(heroTimer);
+      heroTimer = setInterval(function () {
+        if (!document.body.contains(track)) { clearInterval(heroTimer); return; }
+        go(idx + 1);
+      }, 4500);
+    }
+    var prev = document.getElementById("heroPrev");
+    var next = document.getElementById("heroNext");
+    if (prev) prev.onclick = function () { go(idx - 1); auto(); };
+    if (next) next.onclick = function () { go(idx + 1); auto(); };
+    Array.prototype.forEach.call(dots, function (d) {
+      d.onclick = function () { go(+d.dataset.i); auto(); };
+    });
+    var x0 = null;
+    track.addEventListener("touchstart", function (e) {
+      x0 = e.touches[0].clientX;
+    }, { passive: true });
+    track.addEventListener("touchend", function (e) {
+      if (x0 === null) return;
+      var dx = e.changedTouches[0].clientX - x0;
+      if (Math.abs(dx) > 40) { go(idx + (dx < 0 ? 1 : -1)); auto(); }
+      x0 = null;
+    }, { passive: true });
+    go(0); auto();
+  }
+
   function renderHome() {
     view.innerHTML = '<div class="loading">ခဏစောင့်ပါ…</div>';
     Promise.all([ensureHome(), ensureCovers(), ensureAll(), ensureCats(), ensureDL()]).then(function (arr) {
@@ -270,7 +335,7 @@
         var featured = manualIds.map(function (id) { return byId[id]; })
           .filter(Boolean);
         if (featured.length) {
-          html += rowHTML("⭐ Featured", mm(featured.length) + " စုံ", featured);
+          html += heroHTML(featured.slice(0, 5));
         }
       }
       d.series.forEach(function (r) {
@@ -283,6 +348,7 @@
       var catTitles = {all: "📚 စာအုပ်အားလုံး", english: "📚 English စာအုပ်များ", maths: "📚 Maths စာအုပ်များ", science: "📚 Science စာအုပ်များ", others: "📚 အခြား စာအုပ်များ"};
       html += '<h2 class="section-title">' + (catTitles[activeCat] || catTitles.all) + '</h2><div id="homeAll"><div class="loading">ခဏစောင့်ပါ…</div></div>';
       view.innerHTML = html;
+      initHero();
       Promise.all([ensureAll(), ensureCats()]).then(function (arr2) {
         var sets = arr2[0], cats = arr2[1];
         // Education first (english/maths/science), covers prioritized, others (novels/anime) last
@@ -460,5 +526,13 @@
       location.hash = "#/";
     }
   });
+
+  var CATCOLORS = { all: "#f5a623", english: "#4da3ff", maths: "#c586ff",
+    science: "#4dd08a", others: "#9db2c4" };
+  Array.prototype.forEach.call(document.querySelectorAll(".cattabs button"),
+    function (b) {
+      var c = CATCOLORS[b.getAttribute("data-cat")];
+      if (c) b.style.setProperty("--catc", c);
+    });
   route();
 })();
