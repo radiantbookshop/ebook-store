@@ -247,3 +247,5 @@ a { color: inherit; text-decoration: none; }
   padding: 18px 12px 30px; border-top: 1px solid var(--line);
 }
 .loading { color: var(--muted); padding: 30px; text-align: center; }
+
+.dlc { color: #7ee2a8; font-weight: 600; white-space: nowrap; }
