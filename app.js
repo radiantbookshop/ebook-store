@@ -189,6 +189,11 @@
     }
   }
 
+  // Series pushed to the very bottom of the page (owner's rule 2026-10-02):
+  // 0-cover / wrong-cover / non-educational heavyweights never sit at the top.
+  var DEMOTED_SERIES = ["personal best ame", "cambridge ielts practice test book",
+    "spy×family", "everybody up", "family and friends"];
+
   // Hardcoded manual covers (user-curated) - always available, bypasses covers.json cache
   var MANUAL_COVERS = {
     "013a9f61ad62": "data/manual_covers/013a9f61ad62.jpg",
@@ -359,7 +364,12 @@
         }
         function hasCover(s) { return (cmap && cmap[s.id]) ? 0 : 1; }
         allList = filterByCat(sets.slice()).sort(function (a, b) {
-          var r = catRank(a) - catRank(b);
+          var r = (DEMOTED_SERIES.indexOf((a.series || "").trim().toLowerCase()) !== -1 ? 1 : 0) -
+                  (DEMOTED_SERIES.indexOf((b.series || "").trim().toLowerCase()) !== -1 ? 1 : 0);
+          if (r) return r;
+          r = (MANUAL_COVERS[a.id] ? 0 : 1) - (MANUAL_COVERS[b.id] ? 0 : 1);
+          if (r) return r;
+          r = catRank(a) - catRank(b);
           if (r) return r;
           r = hasCover(a) - hasCover(b);
           if (r) return r;
