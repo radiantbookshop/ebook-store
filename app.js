@@ -162,6 +162,7 @@
   // back here for the next batch; the bot accumulates one cart, one price.
   var CART_KEY = "radiant_cart_v1", SENT_KEY = "radiant_cart_sent_v1";
   var BATCH_N = 7;
+  var cartJustSent = false;
   var setReg = {};
   function cartLoad(key, dflt) {
     try { return JSON.parse(localStorage.getItem(key)) || dflt; }
@@ -234,13 +235,19 @@
     return "https://t.me/" + BOT + "?start=w" + total + "-" + blob;
   }
   window.cartCheckoutSent = function () {
-    // the batch on the clicked link is with the bot now; re-render so the
-    // returning buyer is offered the next batch (or the done state)
+    // mark the batch on the clicked link as handed to the bot; when that
+    // was the last batch, the site cart has done its job (the bot keeps
+    // the real cart), so clear it — the returning buyer starts fresh.
     var sent = cartSent();
     cartPending().slice(0, BATCH_N).forEach(function (it) {
       if (sent.indexOf(it.id) === -1) sent.push(it.id);
     });
     cartSave(SENT_KEY, sent);
+    if (!cartPending().length) {
+      cartSave(CART_KEY, []);
+      cartSave(SENT_KEY, []);
+      cartJustSent = true;
+    }
     setTimeout(renderCartPage, 500);
   };
 
@@ -251,8 +258,17 @@
       var html = '<a class="back" href="#/">‹ နောက်သို့</a>' +
         '<h2 class="section-title">🧺 Cart</h2>';
       if (!items.length) {
-        html += '<div class="empty">cart ထဲမှာ ဘာမှမရှိသေးပါ။ ' +
-          'စာအုပ်ရွေးပြီး 🛒 ထည့်မယ် နှိပ်ပါ။</div>';
+        if (cartJustSent) {
+          cartJustSent = false;
+          html += '<div class="dbox">✅ စာအုပ်တွေ Telegram bot ဆီ ' +
+            "ပို့ပြီးပါပြီ — ဒီ cart ကို ရှင်းလိုက်ပါပြီ။ bot ထဲမှာ " +
+            "ငွေချေပြီး ဖိုင်တွေ ရယူပါ။</div>" +
+            '<a class="checkoutbtn" href="https://t.me/' + BOT +
+            '" target="_blank" rel="noopener">Telegram bot ဖွင့်မယ်</a>';
+        } else {
+          html += '<div class="empty">cart ထဲမှာ ဘာမှမရှိသေးပါ။ ' +
+            'စာအုပ်ရွေးပြီး 🛒 ထည့်မယ် နှိပ်ပါ။</div>';
+        }
       } else {
         var sentMap = {};
         cartSent().forEach(function (id) { sentMap[id] = 1; });
