@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#161616">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>Radiant eBookshop — အီးဘုတ်ခ်စာအုပ်ဆိုင်</title>
-<link rel="stylesheet" href="styles.css?v=1">
+<link rel="stylesheet" href="styles.css?v=2">
 <link rel="stylesheet" href="chat.css">
 </head>
 <body>
@@ -17,6 +17,7 @@
       <span class="word"><b>Radiant</b><small>eBookshop</small></span>
     </a>
     <a class="homebtn" href="#/" aria-label="Home">🏠</a>
+    <button class="cartbtn" onclick="location.hash='#/cart'" aria-label="Cart">🧺<span class="cbadge" id="cartBadge" style="display:none"></span></button>
   </div>
   <nav class="cattabs" id="catTabs">
     <button data-cat="all" class="active">All</button>
@@ -49,7 +50,7 @@
   </form>
 </div>
 <script src="config.js"></script>
-<script src="app.js?v=20261002ord1"></script>
+<script src="app.js?v=20261003cart1"></script>
 <script src="chat.js"></script>
 </body>
 </html>

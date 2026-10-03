@@ -155,13 +155,162 @@
   }
   function dlOf(c) { return dlSeed(c) + (DL[c.id] || 0); }
 
+  // --- Website cart -------------------------------------------------------
+  // Books collect in the browser, then checkout hands them to the bot in
+  // batches: Telegram's ?start= payload caps at 64 chars, and one set id
+  // packs into 8 chars, so ~7 sets ride per link. The buyer only bounces
+  // back here for the next batch; the bot accumulates one cart, one price.
+  var CART_KEY = "radiant_cart_v1", SENT_KEY = "radiant_cart_sent_v1";
+  var BATCH_N = 7;
+  var setReg = {};
+  function cartLoad(key, dflt) {
+    try { return JSON.parse(localStorage.getItem(key)) || dflt; }
+    catch (e) { return dflt; }
+  }
+  function cartSave(key, v) {
+    try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) {}
+  }
+  function cartItems() { return cartLoad(CART_KEY, []); }
+  function cartSent() { return cartLoad(SENT_KEY, []); }
+  function cartPending() {
+    var sent = {};
+    cartSent().forEach(function (id) { sent[id] = 1; });
+    return cartItems().filter(function (it) { return !sent[it.id]; });
+  }
+  function cartTotal() {
+    return cartItems().reduce(function (a, it) { return a + (+it.price || 0); }, 0);
+  }
+  function updateCartBadge() {
+    var b = document.getElementById("cartBadge");
+    if (!b) return;
+    var n = cartItems().length;
+    b.textContent = n ? mm(n) : "";
+    b.style.display = n ? "inline-flex" : "none";
+  }
+  function flashBtn(btn, txt) {
+    if (!btn) return;
+    var old = btn.textContent;
+    btn.textContent = txt;
+    setTimeout(function () { btn.textContent = old; }, 1200);
+  }
+  window.addToCart = function (id, btn) {
+    var s = setReg[id];
+    if (!s) return;
+    var items = cartItems();
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].id === id) { flashBtn(btn, "✓ ရှိပြီး"); return; }
+    }
+    items.push({ id: s.id, name: s.name, price: s.price,
+                 file_count: s.file_count });
+    cartSave(CART_KEY, items);
+    updateCartBadge();
+    flashBtn(btn, "✓ ထည့်ပြီး");
+  };
+  window.cartRemove = function (id) {
+    cartSave(CART_KEY,
+             cartItems().filter(function (it) { return it.id !== id; }));
+    updateCartBadge();
+    renderCartPage();
+  };
+  window.cartClearAll = function () {
+    cartSave(CART_KEY, []);
+    cartSave(SENT_KEY, []);
+    updateCartBadge();
+    renderCartPage();
+  };
+  function pidChunk(pid) {
+    var bytes = pid.match(/.{2}/g).map(function (h) {
+      return parseInt(h, 16);
+    });
+    var bin = "";
+    for (var i = 0; i < bytes.length; i++) {
+      bin += String.fromCharCode(bytes[i]);
+    }
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_")
+      .replace(/=+$/, "");
+  }
+  function cartBatchURL(batch, total) {
+    var blob = batch.map(function (it) { return pidChunk(it.id); }).join("");
+    return "https://t.me/" + BOT + "?start=w" + total + "-" + blob;
+  }
+  window.cartCheckoutSent = function () {
+    // the batch on the clicked link is with the bot now; re-render so the
+    // returning buyer is offered the next batch (or the done state)
+    var sent = cartSent();
+    cartPending().slice(0, BATCH_N).forEach(function (it) {
+      if (sent.indexOf(it.id) === -1) sent.push(it.id);
+    });
+    cartSave(SENT_KEY, sent);
+    setTimeout(renderCartPage, 500);
+  };
+
+  function renderCartPage() {
+    ensureCovers().then(function () {
+      updateCartBadge();
+      var items = cartItems(), pending = cartPending();
+      var html = '<a class="back" href="#/">‹ နောက်သို့</a>' +
+        '<h2 class="section-title">🧺 Cart</h2>';
+      if (!items.length) {
+        html += '<div class="empty">cart ထဲမှာ ဘာမှမရှိသေးပါ။ ' +
+          'စာအုပ်ရွေးပြီး 🛒 ထည့်မယ် နှိပ်ပါ။</div>';
+      } else {
+        var sentMap = {};
+        cartSent().forEach(function (id) { sentMap[id] = 1; });
+        html += '<div class="res-list">' + items.map(function (it) {
+          var tail = sentMap[it.id]
+            ? '<span class="sent-tag">✅ bot ဆီ ပို့ပြီး</span>'
+            : '<div class="rprice">' + esc(price(it.price)) + "</div>" +
+              '<button class="rmbtn" onclick="window.cartRemove(\'' +
+              it.id + '\')" aria-label="ဖယ်ရှားရန်">✕</button>';
+          return '<div class="res-item">' + coverHTML(it.id, it.name) +
+            '<div class="rbody"><div class="rname">' + esc(it.name) +
+            '</div><div class="rmeta">' + mm(it.file_count) +
+            " ဖိုင်</div></div>" + tail + "</div>";
+        }).join("") + "</div>";
+        html += '<div class="carttotal">စုစုပေါင်း: <b>' +
+          esc(price(cartTotal())) + "</b> (" + mm(items.length) +
+          " စုံ)</div>";
+        if (pending.length) {
+          var batch = pending.slice(0, BATCH_N);
+          var label = pending.length > batch.length
+            ? "Telegram က မှာယူမယ် (ပထမ " + mm(batch.length) + " အုပ်)"
+            : "Telegram က မှာယူမယ်";
+          html += '<a class="checkoutbtn" href="' +
+            cartBatchURL(batch, items.length) +
+            '" target="_blank" rel="noopener" ' +
+            'onclick="window.cartCheckoutSent()">' + label + "</a>";
+          if (pending.length > batch.length) {
+            html += '<div class="buy-note">စာအုပ်များနေလို့ အသုတ်ခွဲပို့ရပါမယ် — ' +
+              'bot ထဲက လမ်းညွှန်အတိုင်း ဒီ cart ကနေ ဆက်ပို့ရုံပါပဲ။</div>';
+          }
+          html += '<button class="clearbtn" onclick="window.cartClearAll()">' +
+            "🧺 cart အကုန် ရှင်းမယ်</button>";
+        } else {
+          html += '<div class="dbox">✅ အကုန် Telegram bot ဆီ ပို့ပြီးပါပြီ။ ' +
+            "bot ထဲမှာ ငွေချေပါ။</div>" +
+            '<a class="checkoutbtn" href="https://t.me/' + BOT +
+            '" target="_blank" rel="noopener">Telegram bot ဖွင့်မယ်</a>' +
+            '<button class="clearbtn" onclick="window.cartClearAll()">' +
+            "🧺 cart အကုန် ရှင်းမယ်</button>";
+        }
+      }
+      view.innerHTML = html;
+      window.scrollTo(0, 0);
+    });
+  }
+
   function cardHTML(c) {
+    setReg[c.id] = c;
     return '<a class="card" href="#/s/' + c.id + '">' +
       coverHTML(c.id, c.name) +
       '<div class="cbody"><div class="cname">' + esc(c.name) + "</div>" +
       '<div class="cmeta">' + mm(c.file_count) + " ဖိုင် · " + esc(fmtSize(c.total_size)) +
       ' <span class="dlc">⬇ ' + mm(dlOf(c)) + " ကြိမ် ဒေါင်းပြီး</span></div>" +
-      '<div class="cprice">' + esc(price(c.price)) + "</div></div></a>";
+      '<div class="cprice">' + esc(price(c.price)) +
+      '<button class="cadd" onclick="event.preventDefault();' +
+      'event.stopPropagation();window.addToCart(\'' + c.id +
+      '\',this)">🛒 ထည့်မယ်</button>' +
+      "</div></div></a>";
   }
 
   function rowHTML(title, countLabel, cards) {
@@ -432,12 +581,16 @@
           'ဒါမှမဟုတ် <a href="https://t.me/' + BOT + '">bot ထဲမှာ</a> မေးကြည့်ပါ။</div>';
       } else {
         html += '<div class="res-list">' + hits.slice(0, 120).map(function (s, i) {
+          setReg[s.id] = s;
           return '<a class="res-item" href="#/s/' + s.id + '">' +
             '<span class="rnum">' + (i + 1) + ".</span>" +
             coverHTML(s.id, s.name) +
             '<div class="rbody"><div class="rname">' + esc(s.name) + "</div>" +
             '<div class="rmeta">' + mm(s.file_count) + " ဖိုင် · " + esc(fmtSize(s.total_size)) + "</div></div>" +
-            '<div class="rprice">' + esc(price(s.price)) + "</div></a>";
+            '<div class="rprice">' + esc(price(s.price)) + "</div>" +
+            '<button class="cadd" onclick="event.preventDefault();' +
+            'event.stopPropagation();window.addToCart(\'' + s.id +
+            '\',this)">🛒</button></a>';
         }).join("") + "</div>";
         if (hits.length > 120) {
           html += '<div class="empty">အထက် ၁၂၀ ခုသာ ပြထားပါတယ် — ရှာပုံပိုတိတိကျကျ ရိုက်ပါ။</div>';
@@ -463,7 +616,9 @@
         return '<li><span class="fn">' + esc(f.n) + src + '</span>' +
           '<span class="fs">' + esc(fmtSize(f.s)) + "</span></li>";
       }).join("");
-      window._detail = { id: d.id, name: d.name };
+      window._detail = { id: d.id, name: d.name, price: d.price,
+                         file_count: d.file_count };
+      setReg[d.id] = d;
       view.innerHTML =
         '<a class="back" href="javascript:history.back()">‹ နောက်သို့</a>' +
         coverBannerHTML(d.id, d.name) +
@@ -481,6 +636,7 @@
         "<small>တစ်စုံလျှင်</small></div>" +
         '<div class="buybtns">' +
         '<button class="buybtn" onclick="var o=document.getElementById(\'buyOpts\');o.style.display=o.style.display===\'none\'?\'flex\':\'none\';">ဝယ်ယူမယ်</button>' +
+        '<button class="buybtn cartadd" onclick="window.addToCart(\'' + d.id + '\',this)">🛒 Cart ထဲ ထည့်မယ်</button>' +
         '<div class="buyopts" id="buyOpts" style="display:none">' +
         '<a class="buyopt" href="' + buyUrl(d.id) + '" target="_blank" rel="noopener">Telegram က မှာယူမယ်</a>' +
         '<button class="buyopt" onclick="window.RCChat && RCChat.orderViaEmail()">Gmail လိပ်စာနဲ့ မှာယူမယ်</button>' +
@@ -496,6 +652,7 @@
     var h = location.hash || "#/";
     document.body.classList.toggle("has-buybar", h.indexOf("#/s/") === 0);
     if (h.indexOf("#/s/") === 0) renderDetail(h.slice(4).split("?")[0]);
+    else if (h.indexOf("#/cart") === 0) renderCartPage();
     else if (h.indexOf("#/search/") === 0) renderSearch(decodeURIComponent(h.slice(9)));
     else {
       if (qInput.value === "" && document.activeElement !== qInput) { /* keep typed text */ }
@@ -544,5 +701,6 @@
       var c = CATCOLORS[b.getAttribute("data-cat")];
       if (c) b.style.setProperty("--catc", c);
     });
+  updateCartBadge();
   route();
 })();
