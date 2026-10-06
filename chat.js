@@ -36,6 +36,18 @@
     msgs.appendChild(m);
     msgs.scrollTop = msgs.scrollHeight;
   }
+  function addTgBtn() {
+    var m = el("div", "msg o");
+    var a = el("a", null, "📩 Telegram ကနေ မှာယူမယ်");
+    a.href = "https://t.me/" + (RC.BOT || "musebookfinder_bot");
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.style.cssText = "display:inline-block;background:#f5a623;color:#1a1206;" +
+      "border-radius:999px;padding:10px 18px;font-weight:700;text-decoration:none;margin-top:6px";
+    m.appendChild(a);
+    msgs.appendChild(m);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
   function addImgMsg(from, dataUrl) {
     var m = el("div", "msg " + from);
     var img = el("img");
@@ -79,7 +91,8 @@
         }
       }).catch(function () {
         awaitingEmail = false;
-        addMsg("o", "⚠️ System limit လေးဖြစ်နေလို့ လတ်တလော Gmail နဲ့ မှာယူလို့ အဆင်မပြေပါဘူး 🙏\nTelegram ကနေ မှာယူလိုက်ပါ 👇\nhttps://t.me/" + (RC.BOT || "musebookfinder_bot"));
+        addMsg("o", "⚠️ System limit လေးဖြစ်နေလို့ လတ်တလော Gmail နဲ့ မှာယူလို့ အဆင်မပြေပါဘူး 🙏\nအောက်က ခလုတ်နှိပ်ပြီး Telegram ကနေ မှာယူလိုက်ပါ 👇");
+        addTgBtn();
       });
       return;
     }
