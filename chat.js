@@ -70,12 +70,16 @@
       api("/api/chat/email", {
         method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ visitor_id: vid, email: text })
-      }).then(function () {
+      }).then(function (r) {
+        if (!r || r.ok === false) throw new Error("save failed");
         addMsg("o", "✅ မှတ်ထားလိုက်ပါပြီ။ မှာချင်တဲ့စာအုပ်နာမည် ပြောပြပါ — ငွေချေပြီးရင် ပြေစာပုံကို 📷 ခလုတ်နဲ့ တင်ပေးပါ။");
         if (pendingOrder) {
           var po = pendingOrder; pendingOrder = null;
           createOrder(po.pid, po.name);
         }
+      }).catch(function () {
+        awaitingEmail = true;
+        addMsg("o", "⚠️ ခဏတာ သိမ်းမရဖြစ်နေပါတယ် — Gmail လိပ်စာကို နောက်တစ်ခေါက် ပြန်ပို့ပေးပါ။");
       });
       return;
     }
