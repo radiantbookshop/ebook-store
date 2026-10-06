@@ -46,36 +46,10 @@
     msgs.appendChild(m);
     msgs.scrollTop = msgs.scrollHeight;
   }
-  function setQuick(buttons) {
-    quick.innerHTML = "";
-    (buttons || []).forEach(function (b) {
-      var btn = el("button", null, esc(b.label));
-      btn.addEventListener("click", function () { b.onClick(); });
-      quick.appendChild(btn);
-    });
-  }
-
   function greet() {
     if (greeted) return;
     greeted = true;
-    addMsg("o", "မင်္ဂလာပါ 🙏 Radiant eBookshop က ကူညီပေးပါမယ်။ ဖိုင်ကို ဘယ်လို ယူချင်လဲ ရွေးပေးပါ။");
-    setQuick([
-      { label: "📩 Telegram နဲ့ ယူမယ်", onClick: pickTelegram },
-      { label: "📧 Gmail / Drive နဲ့ ယူမယ်", onClick: pickGmail }
-    ]);
-  }
-
-  function pickTelegram() {
-    setQuick([]);
-    addMsg("v", "📩 Telegram နဲ့ ယူမယ်");
-    addMsg("o", "Telegram နဲ့ဆို အမြန်ဆုံးရပါမယ် ⚡\nအောက်က link ကို နှိပ်ပြီး bot ထဲမှာ မှာလိုက်ပါ 👇\nhttps://t.me/" + (RC.BOT || "musebookfinder_bot"));
-  }
-
-  function pickGmail() {
-    setQuick([]);
-    addMsg("v", "📧 Gmail / Drive နဲ့ ယူမယ်");
-    addMsg("o", "ဟုတ်ကဲ့။ ဖိုင်ဆိုဒ်ပေါ်မူတည်ပြီး အနည်းငယ်ကြာနိုင်ပါတယ် ⏳\nဖိုင်ပို့ပေးရမယ့် Gmail လိပ်စာကို ရိုက်ပေးပါ။");
-    awaitingEmail = true;
+    addMsg("o", "မင်္ဂလာပါ 🙏 Radiant eBookshop က ကူညီပေးပါမယ်။ မေးချင်တာရှိရင် ဒီမှာ ရေးလိုက်ပါ။");
   }
 
   function api(path, opts) {
