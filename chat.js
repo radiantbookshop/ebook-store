@@ -36,10 +36,11 @@
     msgs.appendChild(m);
     msgs.scrollTop = msgs.scrollHeight;
   }
-  function addTgBtn() {
+  function addTgBtn(pid) {
     var m = el("div", "msg o");
     var a = el("a", null, "📩 Telegram ကနေ မှာယူမယ်");
-    a.href = "https://t.me/" + (RC.BOT || "musebookfinder_bot");
+    a.href = "https://t.me/" + (RC.BOT || "musebookfinder_bot") +
+      (pid ? "?start=buy_" + encodeURIComponent(pid) : "");
     a.target = "_blank";
     a.rel = "noopener";
     a.style.cssText = "display:inline-block;background:#f5a623;color:#1a1206;" +
@@ -91,8 +92,9 @@
         }
       }).catch(function () {
         awaitingEmail = false;
+        var po = pendingOrder; pendingOrder = null;
         addMsg("o", "⚠️ System limit လေးဖြစ်နေလို့ လတ်တလော Gmail နဲ့ မှာယူလို့ အဆင်မပြေပါဘူး 🙏\nအောက်က ခလုတ်နှိပ်ပြီး Telegram ကနေ မှာယူလိုက်ပါ 👇");
-        addTgBtn();
+        addTgBtn(po && po.pid);
       });
       return;
     }
