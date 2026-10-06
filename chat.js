@@ -78,8 +78,8 @@
           createOrder(po.pid, po.name);
         }
       }).catch(function () {
-        awaitingEmail = true;
-        addMsg("o", "⚠️ ခဏတာ သိမ်းမရဖြစ်နေပါတယ် — Gmail လိပ်စာကို နောက်တစ်ခေါက် ပြန်ပို့ပေးပါ။");
+        awaitingEmail = false;
+        addMsg("o", "⚠️ System limit လေးဖြစ်နေလို့ လတ်တလော Gmail နဲ့ မှာယူလို့ အဆင်မပြေပါဘူး 🙏\nTelegram ကနေ မှာယူလိုက်ပါ 👇\nhttps://t.me/" + (RC.BOT || "musebookfinder_bot"));
       });
       return;
     }
