@@ -297,7 +297,7 @@
             'onclick="window.cartCheckoutSent()">' + label + "</a>";
           var gmailBatch = pending.map(function (it) {
             return "{pid:'" + it.id + "',name:'" +
-              it.name.replace(/'/g, "\\'") + "'}";
+              it.name.replace(/'/g, "\\'") + "',price:" + (it.price || 3000) + "}";
           }).join(",");
           html += '<button class="checkoutbtn gmailbtn" onclick="window.RCChat.orderCartViaEmail([' +
             gmailBatch + '])">📧 Gmail လိပ်စာနဲ့ မှာယူမယ် (' + mm(pending.length) + " အုပ်)</button>";

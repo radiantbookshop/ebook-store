@@ -89,7 +89,13 @@
         if (pendingOrder) {
           var po = pendingOrder; pendingOrder = null;
           if (po.batch) {
-            createOrdersSequential(po.batch);
+            createOrdersSequential(po.batch, function () {
+              var total = po.batch.reduce(function (s, it) {
+                return s + (it.price || 3000);
+              }, 0);
+              addMsg("o", "💰 စုစုပေါင်း " + total.toLocaleString() +
+                " ကျပ် (" + po.batch.length + " အုပ်) — ဒီပမာဏအတိုင်း ငွေလွှဲပြီး ပြေစာပုံကို 📷 ခလုတ်နဲ့ တင်ပေးပါ။");
+            });
           } else {
             createOrder(po.pid, po.name);
           }
@@ -143,11 +149,11 @@
     });
   }
 
-  function createOrdersSequential(items) {
+  function createOrdersSequential(items, done) {
     // one at a time — avoids worker thread write races losing messages
     var i = 0;
     function next() {
-      if (i >= items.length) return;
+      if (i >= items.length) { if (done) done(); return; }
       var it = items[i++];
       createOrder(it.pid, it.name).then(next);
     }
