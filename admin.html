@@ -166,10 +166,52 @@ async function openThread(tid) {
     </div>
   `).join('');
   msgs.scrollTop = msgs.scrollHeight;
+
+  // Reply box
+  let replyBox = document.getElementById('replyBox');
+  if (!replyBox) {
+    replyBox = document.createElement('div');
+    replyBox.id = 'replyBox';
+    replyBox.style.cssText = 'display:flex;gap:8px;margin-top:12px;';
+    replyBox.innerHTML = `
+      <input id="replyInput" type="text" placeholder="စာပြန်ရေးပါ..." style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);">
+      <button onclick="sendReply()" style="padding:10px 16px;border-radius:8px;background:var(--amber);border:none;font-weight:700;cursor:pointer;">ပို့မယ်</button>
+    `;
+    document.getElementById('chatView').appendChild(replyBox);
+  }
+  window._replyTid = tid;
+  const ri = document.getElementById('replyInput');
+  ri.value = '';
+  ri.onkeydown = function(e) { if (e.key === 'Enter') sendReply(); };
   
   // Check if there's a pending order for this thread
   // (orders are linked via visitor_id)
   document.getElementById('approveBar').classList.add('hidden');
+}
+
+async function sendReply() {
+  const input = document.getElementById('replyInput');
+  const text = input.value.trim();
+  if (!text || !window._replyTid) return;
+  input.value = '';
+  input.disabled = true;
+  try {
+    const r = await fetch(WORKER + '/api/chat/admin-reply', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-job-secret': jobSecret },
+      body: JSON.stringify({ visitor_id: window._replyTid, text: text })
+    });
+    const d = await r.json();
+    if (d.ok) {
+      // reload thread to show the new message
+      showThread(window._replyTid);
+    } else {
+      alert('ပို့လို့မရပါ: ' + (d.err || 'error'));
+    }
+  } catch (e) {
+    alert('ပို့လို့မရပါ');
+  }
+  input.disabled = false;
 }
 
 function showThreads() {
