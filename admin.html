@@ -138,12 +138,36 @@ function renderThreads() {
     return;
   }
   list.innerHTML = ts.map(t => `
-    <div class="thread-item ${t.has_image ? 'has-image' : ''}" onclick="openThread('${t.tid}')">
-      <div><strong>${escapeHtml(t.email || '👤 ' + t.tid.slice(-6))}</strong> ${t.has_image ? '📷' : ''}</div>
-      <div class="thread-meta">${t.count} messages • ${new Date(t.last_ts).toLocaleString('my-MM')}</div>
-      <div style="font-size:13px; color:#aaa; margin-top:5px;">${escapeHtml(t.last_text)}</div>
+    <div class="thread-item ${t.has_image ? 'has-image' : ''}">
+      <div onclick="openThread('${t.tid}')" style="cursor:pointer;">
+        <div><strong>${escapeHtml(t.email || '👤 ' + t.tid.slice(-6))}</strong> ${t.has_image ? '📷' : ''}</div>
+        <div class="thread-meta">${t.count} messages • ${new Date(t.last_ts).toLocaleString('my-MM')}</div>
+        <div style="font-size:13px; color:#aaa; margin-top:5px;">${escapeHtml(t.last_text)}</div>
+      </div>
+      <button onclick="deleteThread('${t.tid}', event)" style="margin-top:8px;background:#5c1a1a;color:#ff8888;border:1px solid #883333;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:12px;">🗑️ ဖျက်မယ်</button>
     </div>
   `).join('');
+}
+
+async function deleteThread(tid, event) {
+  event.stopPropagation();
+  if (!confirm('ဒီ chat နဲ့ ဆက်စပ်� orders တွေ အကုန် ဖျက်မှာလား?')) return;
+  try {
+    const r = await fetch(WORKER + '/api/admin/thread/delete', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-job-secret': jobSecret },
+      body: JSON.stringify({ visitor_id: tid })
+    });
+    const d = await r.json();
+    if (d.ok) {
+      alert(`ဖျက်ပြီးပြီ (${d.deleted_orders} orders)`);
+      loadThreads();
+    } else {
+      alert('ဖျက်လို့မရပါ');
+    }
+  } catch (e) {
+    alert('ဖျက်လို့မရပါ');
+  }
 }
 
 async function openThread(tid) {
