@@ -295,6 +295,12 @@
             cartBatchURL(batch, items.length) +
             '" target="_blank" rel="noopener" ' +
             'onclick="window.cartCheckoutSent()">' + label + "</a>";
+          var gmailBatch = batch.map(function (it) {
+            return "{pid:'" + it.id + "',name:'" +
+              it.name.replace(/'/g, "\\'") + "'}";
+          }).join(",");
+          html += '<button class="checkoutbtn gmailbtn" onclick="window.RCChat.orderCartViaEmail([' +
+            gmailBatch + '])">📧 Gmail လိပ်စာနဲ့ မှာယူမယ်</button>';
           if (pending.length > batch.length) {
             html += '<div class="buy-note">စာအုပ်များနေလို့ အသုတ်ခွဲပို့ရပါမယ် — ' +
               'bot ထဲက လမ်းညွှန်အတိုင်း ဒီ cart ကနေ ဆက်ပို့ရုံပါပဲ။</div>';

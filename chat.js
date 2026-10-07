@@ -88,7 +88,11 @@
         addMsg("o", "✅ မှတ်ထားလိုက်ပါပြီ။ မှာချင်တဲ့စာအုပ်နာမည် ပြောပြပါ — ငွေချေပြီးရင် ပြေစာပုံကို 📷 ခလုတ်နဲ့ တင်ပေးပါ။");
         if (pendingOrder) {
           var po = pendingOrder; pendingOrder = null;
-          createOrder(po.pid, po.name);
+          if (po.batch) {
+            po.batch.forEach(function (it) { createOrder(it.pid, it.name); });
+          } else {
+            createOrder(po.pid, po.name);
+          }
         }
       }).catch(function () {
         awaitingEmail = false;
@@ -175,6 +179,16 @@
     pendingOrder = { pid: d.id, name: d.name };
   }
 
+  function orderCartViaEmail(batch) {
+    // batch: [{pid, name}, ...] — creates one order per item after email
+    if (!batch || !batch.length) return;
+    open();
+    var names = batch.map(function (it) { return it.name; }).join(", ");
+    addMsg("o", '📧 Cart ထဲက ' + batch.length + ' အုပ် (' + names + ') ကို Gmail / Drive နဲ့ မှာမယ်ဆိုရင် — ဖိုင်ပို့ပေးရမယ့် Gmail လိပ်စာကို ရိုက်ပေးပါ။');
+    awaitingEmail = true;
+    pendingOrder = { batch: batch };
+  }
+
   function init() {
     fab = document.getElementById("chatFab");
     panel = document.getElementById("chatPanel");
@@ -203,7 +217,8 @@
     }, 15000);
   }
 
-  window.RCChat = { open: open, close: close, toggle: toggle, orderViaEmail: orderViaEmail };
+  window.RCChat = { open: open, close: close, toggle: toggle,
+    orderViaEmail: orderViaEmail, orderCartViaEmail: orderCartViaEmail };
   if (document.readyState === "loading")
     document.addEventListener("DOMContentLoaded", init);
   else init();
