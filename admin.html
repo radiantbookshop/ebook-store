@@ -60,7 +60,10 @@
 </div>
 
 <div id="chatView" class="chat-view">
-  <button class="back-btn" onclick="showThreads()">← နောက်သို့</button>
+  <div style="display:flex;gap:8px;margin-bottom:15px;">
+    <button class="back-btn" onclick="showThreads()" style="margin-bottom:0;">← နောက်သို့</button>
+    <button onclick="deleteThread(window._replyTid, event)" style="background:#5c1a1a;color:#ff8888;border:1px solid #883333;border-radius:4px;padding:10px 15px;cursor:pointer;">🗑️ ဖျက်မယ်</button>
+  </div>
   <div id="chatHeader" style="margin-bottom:15px;"></div>
   <div id="approveBar" class="approve-bar hidden">
     <p style="margin-bottom:10px;">ဒီ order ကို approve လုပ်မလား?</p>
