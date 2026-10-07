@@ -47,6 +47,15 @@
 
 <div id="threadsView" class="threads hidden">
   <h2 style="margin-bottom:15px;">💬 Chat Threads</h2>
+  <div style="display:flex; gap:10px; margin-bottom:15px;">
+    <input id="searchInput" placeholder="🔍 email / စာသား ရှာ..."
+           style="flex:1; padding:10px; background:#2a2a2a; border:1px solid #444; color:#eee; border-radius:4px;"
+           oninput="renderThreads()">
+    <button id="filterAll" onclick="setFilter('all')"
+            style="padding:10px 15px; background:#f5a623; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">All</button>
+    <button id="filterImg" onclick="setFilter('img')"
+            style="padding:10px 15px; background:#333; color:#eee; border:none; border-radius:4px; cursor:pointer;">📷</button>
+  </div>
   <div id="threadList"></div>
 </div>
 
@@ -66,6 +75,8 @@ const WORKER = 'https://radiant-ebook-support.zuyaraye.workers.dev';
 let jobSecret = localStorage.getItem('admin_secret') || '';
 let currentTid = null;
 let currentOrder = null;
+let allThreads = [];
+let threadFilter = 'all';
 
 if (jobSecret) {
   document.getElementById('loginView').classList.add('hidden');
@@ -98,13 +109,37 @@ async function loadThreads() {
     return;
   }
   const list = document.getElementById('threadList');
-  if (!d.threads.length) {
-    list.innerHTML = '<p style="color:#888;">Thread မရှိသေးဘူး</p>';
+  allThreads = d.threads || [];
+  // newest first
+  allThreads.sort((a, b) => (b.last_ts || 0) - (a.last_ts || 0));
+  renderThreads();
+}
+
+function setFilter(f) {
+  threadFilter = f;
+  document.getElementById('filterAll').style.background = f === 'all' ? '#f5a623' : '#333';
+  document.getElementById('filterAll').style.color = f === 'all' ? '#000' : '#eee';
+  document.getElementById('filterImg').style.background = f === 'img' ? '#f5a623' : '#333';
+  document.getElementById('filterImg').style.color = f === 'img' ? '#000' : '#eee';
+  renderThreads();
+}
+
+function renderThreads() {
+  const q = (document.getElementById('searchInput').value || '').toLowerCase();
+  const list = document.getElementById('threadList');
+  let ts = allThreads;
+  if (threadFilter === 'img') ts = ts.filter(t => t.has_image);
+  if (q) ts = ts.filter(t =>
+    (t.email || '').toLowerCase().includes(q) ||
+    (t.last_text || '').toLowerCase().includes(q) ||
+    (t.tid || '').toLowerCase().includes(q));
+  if (!ts.length) {
+    list.innerHTML = '<p style="color:#888;">မတွေ့ဘူး</p>';
     return;
   }
-  list.innerHTML = d.threads.map(t => `
+  list.innerHTML = ts.map(t => `
     <div class="thread-item ${t.has_image ? 'has-image' : ''}" onclick="openThread('${t.tid}')">
-      <div><strong>${t.email || '👤 ' + t.tid.slice(-6)}</strong> ${t.has_image ? '📷' : ''}</div>
+      <div><strong>${escapeHtml(t.email || '👤 ' + t.tid.slice(-6))}</strong> ${t.has_image ? '📷' : ''}</div>
       <div class="thread-meta">${t.count} messages • ${new Date(t.last_ts).toLocaleString('my-MM')}</div>
       <div style="font-size:13px; color:#aaa; margin-top:5px;">${escapeHtml(t.last_text)}</div>
     </div>
