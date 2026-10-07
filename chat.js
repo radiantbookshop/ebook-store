@@ -89,7 +89,7 @@
         if (pendingOrder) {
           var po = pendingOrder; pendingOrder = null;
           if (po.batch) {
-            po.batch.forEach(function (it) { createOrder(it.pid, it.name); });
+            createOrdersSequential(po.batch);
           } else {
             createOrder(po.pid, po.name);
           }
@@ -135,12 +135,23 @@
   }
 
   function createOrder(pid, name) {
-    api("/api/order", {
+    return api("/api/order", {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ visitor_id: vid, pid: pid, set_name: name })
     }).then(function (r) {
       if (!r.ok) addMsg("o", "အော်ဒါတင်ရာမှာ အမှားဖြစ်နေပါတယ် — chat မှာ တိုက်ရိုက်ပြောပေးပါ။");
     });
+  }
+
+  function createOrdersSequential(items) {
+    // one at a time — avoids worker thread write races losing messages
+    var i = 0;
+    function next() {
+      if (i >= items.length) return;
+      var it = items[i++];
+      createOrder(it.pid, it.name).then(next);
+    }
+    next();
   }
 
   function poll() {
