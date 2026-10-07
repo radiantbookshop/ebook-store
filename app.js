@@ -321,11 +321,19 @@
     });
   }
 
+  function compTabs(comps) {
+    if (!comps || !comps.length) return "";
+    return '<div class="ctabs">' + comps.map(function (c) {
+      return '<span class="ctab">' + esc(c) + "</span>";
+    }).join("") + "</div>";
+  }
+
   function cardHTML(c) {
     setReg[c.id] = c;
     return '<a class="card" href="#/s/' + c.id + '">' +
       coverHTML(c.id, c.name) +
       '<div class="cbody"><div class="cname">' + esc(c.name) + "</div>" +
+      compTabs(c.components) +
       '<div class="cmeta">' + mm(c.file_count) + " ဖိုင် · " + esc(fmtSize(c.total_size)) +
       ' <span class="dlc">⬇ ' + mm(dlOf(c)) + " ကြိမ် ဒေါင်းပြီး</span></div>" +
       '<div class="cprice">' + esc(price(c.price)) +
@@ -608,6 +616,7 @@
             '<span class="rnum">' + (i + 1) + ".</span>" +
             coverHTML(s.id, s.name) +
             '<div class="rbody"><div class="rname">' + esc(s.name) + "</div>" +
+            compTabs(s.components) +
             '<div class="rmeta">' + mm(s.file_count) + " ဖိုင် · " + esc(fmtSize(s.total_size)) + "</div></div>" +
             '<div class="rprice">' + esc(price(s.price)) + "</div>" +
             '<button class="cadd" onclick="event.preventDefault();' +

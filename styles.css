@@ -184,6 +184,12 @@ a { color: inherit; text-decoration: none; }
 }
 .banner.hasimg { padding: 0; background: #081018; }
 .banner.hasimg img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.ctabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 5px 0 3px; }
+.ctab {
+  font-size: 10.5px; line-height: 1.6; padding: 0 8px; border-radius: 999px;
+  background: rgba(245,166,35,.10); border: 1px solid rgba(245,166,35,.45);
+  color: #f5a623; white-space: nowrap;
+}
 .dtitle { font-size: 21px; margin: 0 0 6px; }
 .dseries { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
