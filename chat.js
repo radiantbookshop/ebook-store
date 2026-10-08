@@ -13,6 +13,7 @@
 
   var lastTs = 0, greeted = false, pollTimer = null, awaitingEmail = false;
   var pendingOrder = null; // {pid, name} waiting for email
+  var pendingOrderIds = []; // order_ids created this session, sent with receipt
 
   var fab, panel, msgs, quick, form, input, fileInput, dot;
 
@@ -129,9 +130,11 @@
       URL.revokeObjectURL(img.src);
       // Show the actual image in chat (not just text)
       addImgMsg("v", dataUrl);
+      var oids = pendingOrderIds.slice();
+      pendingOrderIds = [];
       api("/api/chat/send", {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ visitor_id: vid, text: "", image_b64: b64, image_name: file.name })
+        body: JSON.stringify({ visitor_id: vid, text: "", image_b64: b64, image_name: file.name, order_ids: oids })
       }).then(function (r) {
         if (!r.ok) addMsg("o", "ပုံ ပို့ရာမှာ အမှားဖြစ်နေပါတယ် — ပြန်စမ်းကြည့်ပါ။");
         else addMsg("o", "✅ ပြေစာပုံ ရရှိပါပြီ — စစ်ဆေးပြီးရင် ဖိုင်ပို့ပေးပါမယ်။");
@@ -146,6 +149,7 @@
       body: JSON.stringify({ visitor_id: vid, pid: pid, set_name: name })
     }).then(function (r) {
       if (!r.ok) addMsg("o", "အော်ဒါတင်ရာမှာ အမှားဖြစ်နေပါတယ် — chat မှာ တိုက်ရိုက်ပြောပေးပါ။");
+      else if (r.order_id) pendingOrderIds.push(r.order_id);
     });
   }
 
